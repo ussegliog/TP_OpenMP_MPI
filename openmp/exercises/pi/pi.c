@@ -36,7 +36,7 @@ double pi_estimation1(int n, double h)
     {
       // Calcul de Pi
       Pi_calcule = 0;
-//#pragma omp ........... (TODO : reduction)
+#pragma omp parallel for reduction(+ : Pi_calcule) schedule(static)
     for(int i = 0; i<n; i++)
       {
 	double x = h * (i + 0.5);
@@ -62,15 +62,15 @@ double pi_estimation2(int n, double h)
     Pi_calcule = 0;
     Pi_calcule_loc = 0;
     
-//#pragma omp ..... (TODO : parallel and variable scope)
+#pragma omp parallel firstprivate(Pi_calcule_loc, x)
     {
-//#pragma omp ..... (TODO : share work)
+#pragma omp for schedule(static)
       for(int i = 0; i< n; i++)
 	{
 	  x = h * (i + 0.5);
 	  Pi_calcule_loc += f(x);
 	}
-//#pragma omp .... (TODO : protection to ensure the Thread-Safety)
+#pragma omp critical
 	{
 	  Pi_calcule += Pi_calcule_loc;
 	}

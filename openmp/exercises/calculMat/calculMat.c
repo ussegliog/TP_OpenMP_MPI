@@ -4,8 +4,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <stdbool.h>  
-#include <math.h> 
+#include <stdbool.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -21,20 +21,24 @@
 #endif
 
 ////////// OpenMP uses for some matrix calculations ///////////
-void cal_mat_opt(float *a, float *b, float *c, float *d, float *e, 
+void cal_mat_opt(float *a, float *b, float *c, float *d, float *e,
 		long int n, int *nbIterationsPerthreads, const int nbThreads)
-{   
+{
   long int i;
   int nbIterations_currentThread = 0;
-  
-//#pragma omp ..... (TODO : parallel and variable scope)
+
+#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads), private(nbIterations_currentThread)
   {
     nbIterations_currentThread = 0;
     // Private thread memory ("thread" stack)
-    // TODO : variable declarations
+    double a_int;
+    double b_int;
+    double c_int;
+    double d_int;
+    double e_int;
 
-   
-//#pragma omp ..... (TODO : share work)
+
+#pragma omp for schedule(static), private(a_int, b_int, c_int, d_int, e_int)
     for (i=0; i<n; i++)
       {
 	// Store values into private thread memory
@@ -48,7 +52,7 @@ void cal_mat_opt(float *a, float *b, float *c, float *d, float *e,
 
 	// Dummy loop (the number of iteration can be decreased)
 	for (int j = 0; j < 100; j++)
-	  {	
+	  {
 	    a_int += b_int*c_int - d_int * e_int;
 	    a_int += b_int +c_int - d_int * e_int;
 	    a_int += b_int - c_int * d_int * e_int;
@@ -59,7 +63,7 @@ void cal_mat_opt(float *a, float *b, float *c, float *d, float *e,
 	nbIterations_currentThread++;
 	// Assign value to heap (inside input array)
 	a[i] = a_int;
-	
+
       } // Implicit barrier
 
     // Assign value to heap (inside input array)
@@ -67,36 +71,36 @@ void cal_mat_opt(float *a, float *b, float *c, float *d, float *e,
 
     // Explicit barrier to wait all threads and be sure that nbIterationsPerThreads was updated
     // by all threads
-//#pragma omp .... (TODO : explicit barrier)   
-    
-//#pragma omp ...(TODO : Diaplay on one thread)
+#pragma omp barrier
+
+#pragma omp single
     {
       // For each thread, print the number of iteration
-      for (int j = 0; j < nbThreads; j++) 
+      for (int j = 0; j < nbThreads; j++)
 	{
 	  printf("nbIterations : %d for thread %d \n", nbIterationsPerthreads[j], j);
-	} 
+	}
       printf("Value for the array a[0] = %f \n", a[0]);
     }
   } // barrier here
 }
 
-void cal_mat(float *a, float *b, float *c, float *d, float *e, 
+void cal_mat(float *a, float *b, float *c, float *d, float *e,
 	     long int n, int *nbIterationsPerthreads, const int nbThreads)
-{   
+{
   long int i;
   bool with_iterationDisplay = false;
-  
-//#pragma omp ..... (TODO : parallel)
+
+#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads, with_iterationDisplay)
   {
-//#pragma omp ..... (TODO : share work)
+#pragma omp for schedule(static)
     for (i = 0; i < n; i++)
       {
 	a[i] = b[i] + c[i] + d[i] + e[i];
-	
+
 	// Dummy loop (the number of iteration can be decreased)
 	for (int j = 0; j < 100; j++)
-	  {	
+	  {
 	    a[i] += b[i]*c[i] - d[i] * e[i];
 	    a[i] += b[i] +c[i] - d[i] * e[i];
 	    a[i] += b[i] - c[i] * d[i] * e[i];
@@ -106,26 +110,26 @@ void cal_mat(float *a, float *b, float *c, float *d, float *e,
 	nbIterationsPerthreads[omp_get_thread_num()]++;
       } // Implicit barrier
 
-//#pragma omp ..... (TODO : Display on one thread)
+#pragma omp single
 	{
 	  if (with_iterationDisplay)
 	    {
 	      // For each thread, print the number of iteration
-	      for (int j = 0; j < nbThreads; j++) 
+	      for (int j = 0; j < nbThreads; j++)
 		{
 		  printf("nbIterations : %d for thread %d \n", nbIterationsPerthreads[j], j);
 		}
 	       }
 	  printf("Value for the array a[0] = %f \n", a[0]);
-	   
+
       } // barrier here
   }
 }
 
- 
+
 ///////////////// main /////////////
 int main(int argc, char *argv[])
-{  
+{
   // Get nb threads
   int nb_threads;
 #pragma omp parallel
@@ -141,7 +145,7 @@ int main(int argc, char *argv[])
 
   int nbIterationsPerthreads[nb_threads]; // false-sharing possible here
 
-  // Allocations 
+  // Allocations
   a = (float*) calloc(n, sizeof(float));
   b = (float*) malloc(n * sizeof(float));
   c = (float*) malloc(n * sizeof(float));
@@ -149,7 +153,7 @@ int main(int argc, char *argv[])
   e = (float*) malloc(n * sizeof(float));
 
   // Initzialiation
-  for (long int k = 0; k < n; k++) 
+  for (long int k = 0; k < n; k++)
     {
       b[k] = 1.;
       c[k] = 2.;
@@ -165,11 +169,11 @@ int main(int argc, char *argv[])
   struct timeval t_elapsed_0;
   gettimeofday(&t_elapsed_0, NULL);
 
-  
+
   ///////////////
   // Call cal_mat function : cal_mat or cal_mat_opt
   ///////////////
-  cal_mat(a, b, c, d, e, n, nbIterationsPerthreads, nb_threads);
+  cal_mat_opt(a, b, c, d, e, n, nbIterationsPerthreads, nb_threads);
 
   // Elapsed time at the end
   struct timeval t_elapsed_1;
@@ -179,8 +183,8 @@ int main(int argc, char *argv[])
   //  CPU time at the end
   clock_t t_cpu_1 = clock();
   double t_cpu = (t_cpu_1 - t_cpu_0) / (double)CLOCKS_PER_SEC;
-  
-  
+
+
   // Free Memory
   free(a);
   a = 0;
