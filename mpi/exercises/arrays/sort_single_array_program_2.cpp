@@ -44,66 +44,54 @@ int main(int argc, char *argv[])
           std::cout << "Elements no " << i+1 << "::" << array[i] << std::endl;
         }
       std::cout << "#############################" << std::endl;
-      
-      // Send parts of array to others
-      for (int k = 1; k < numtasks; k++)
-        {
-          dest = k;
-          rc = MPI_Send(&array[k*size_part], size_part,
-                        MPI_INT, dest,
-                        tag, MPI_COMM_WORLD);
-        }
     }
   else
     {
-      array = new int[size_part];
-      // Receive a part of the array
-      source = 0;
-      rc = MPI_Recv(array, size_part, MPI_INT, source, tag,
-                    MPI_COMM_WORLD, &Stat);
+      array = new int[SIZE_ARRAY];
     }
 
+  // Build counts and displacements to have at the end a whole contiguous array from all process
+  int send_counts[numtasks];
+  int recv_count = size_part;
+  int send_displacements[numtasks];
+  for (int k = 0; k < numtasks; k++)
+    {
+      // Send to each process
+      send_counts[k] = size_part;
+      // Split the init array to numtasks equal parts
+      send_displacements[k] = k*(size_part);
+    }
+
+  // Scatter the big array to everybody's part
+  MPI_Scatterv(array, send_counts, send_displacements, MPI_INT,
+               array , recv_count, MPI_INT, 0, MPI_COMM_WORLD);
 
   // Sort the array (part of the array for each process)
   sortArray(array, size_part);
 
-  // Gather arrays and print results
+  // Build counts and displacements to have at the end a whole contiguous array from all process
+  int receive_counts[numtasks];
+  int receive_displacements[numtasks];
+  for (int k = 0; k < numtasks; k++)
+    {
+      // Each process sends one array of size_part elts
+      receive_counts[k] = size_part;
+      // The array is the n_task part of the whole array
+      receive_displacements[k] = k*size_part;
+    }
+
+  // Gather all sorted arrays as contiguous array
+  int send_count = size_part;
+  MPI_Gatherv(array, send_count, MPI_INT, array, receive_counts, receive_displacements,
+              MPI_INT, 0, MPI_COMM_WORLD);
+
   if (rank == 0)
     {
-      // Prepare arrays and assign the index 0 with process 0 data
-      int ** arrays = new int*[numtasks];
-      arrays[0] = array;
-
-      // Receive all the parts from other process
-      for (int k = 1; k < numtasks; k++)
-        {
-          arrays[k] = new int[size_part];
-          source = k;
-
-          rc = MPI_Recv(arrays[k], size_part, MPI_INT, source,
-                        tag, MPI_COMM_WORLD, &Stat);
-        }
-
-      // Gather all the parts
-      int * randArray = gatherSortArrays(arrays, numtasks, size_part);
-
-      // Free arrays
-      for (int k = 1; k < numtasks; k++)
-        {
-          delete arrays[k];
-          arrays[k] = 0;
-        }
-
+      // Re Sort the whole array
+      sortArray(array, SIZE_ARRAY);
       // Print the array
       for(int i = 0; i < SIZE_ARRAY; i++)
-        std::cout << "Elements no " << i+1 << "::" << randArray[i] << std::endl;
-    }
-  else
-    {
-      // Send the part
-      dest = 0;
-      rc = MPI_Send(array, SIZE_ARRAY/numtasks, MPI_INT, dest,
-                    tag, MPI_COMM_WORLD);
+        std::cout << "Elements no " << i+1 << "::" << array[i] << std::endl;
     }
 
   // Free memory
