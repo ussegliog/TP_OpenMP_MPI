@@ -23,9 +23,10 @@ int main(int argc, char *argv[])
     var_firstPriv += 42;
     var_priv += 42;
     
+#pragma omp atomic
+      var_shared += 42;
 #pragma omp crtical
     {
-      var_shared += 42;
       printf("valeurs dans // pour l'id %d : var_firstPriv = %d,  var_priv = %d,  var_shared = %d  \n", ID, var_firstPriv, var_priv, var_shared);
     }
     
