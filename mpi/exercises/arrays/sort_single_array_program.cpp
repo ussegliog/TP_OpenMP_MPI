@@ -25,6 +25,13 @@ int main(int argc, char *argv[])
       MPI_Finalize();
       return 1;
     }
+  else
+    {
+      if (rank == 0)
+        {
+          std::cout << "nb process : " << numtasks << std::endl;
+        }
+    }
 
   int * array;
   ArrayHandler * arrayHandler;
