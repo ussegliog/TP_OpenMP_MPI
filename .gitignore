@@ -3,6 +3,8 @@ build
 *.pyc
 .\#*
 \#*\#
+*.out
+*.err
 *.o
 *.e
 test
