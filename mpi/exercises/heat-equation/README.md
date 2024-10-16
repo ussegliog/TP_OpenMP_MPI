@@ -15,5 +15,7 @@ Insert suitable MPI routines into the skeleton code in
 [skeleton.py](skeleton.py) (search for "TODO"s).
 Remember to update all ghost layers at each iteration.
 
+Examples of mpi4py APIs could be found here : https://mpi4py.readthedocs.io/en/stable/tutorial.html
+
 A schematic representation of the decomposition looks like:
 ![img](domain_decomposition.png)
