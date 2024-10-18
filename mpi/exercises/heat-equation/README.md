@@ -1,6 +1,6 @@
 ## Parallel heat equation
 
-Parallelize the [heat equation](../../numpy/heat-equation) program with MPI,
+Parallelize the [heat equation](serial/heat.py) program with MPI,
 by dividing the grid into blocks of rows and assigning one row block to one
 task. A domain decomposition, that is.
 
