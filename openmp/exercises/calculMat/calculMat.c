@@ -27,7 +27,8 @@ void cal_mat_opt(float *a, float *b, float *c, float *d, float *e,
   long int i;
   int nbIterations_currentThread = 0;
 
-#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads, nbThreads), private(nbIterations_currentThread)
+  //#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads, nbThreads), private(nbIterations_currentThread)
+#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads), private(nbIterations_currentThread)
   {
     nbIterations_currentThread = 0;
     // Private thread memory ("thread" stack)
@@ -91,7 +92,8 @@ void cal_mat(float *a, float *b, float *c, float *d, float *e,
   long int i;
   bool with_iterationDisplay = false;
 
-#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads, nbThreads, with_iterationDisplay)
+  //#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads, nbThreads, with_iterationDisplay)
+#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads, with_iterationDisplay)
   {
 #pragma omp for schedule(static)
     for (i = 0; i < n; i++)
