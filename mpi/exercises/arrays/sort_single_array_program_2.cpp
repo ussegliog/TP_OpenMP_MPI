@@ -58,7 +58,6 @@ int main(int argc, char *argv[])
       array = new int[SIZE_ARRAY];
     }
 
-  // Build counts and displacements to have at the end a whole contiguous array from all process
 
   // Scatter the big array to everybody's part
   MPI_Scatter(array, size_part, MPI_INT,
