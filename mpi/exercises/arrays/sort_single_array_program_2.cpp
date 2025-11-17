@@ -4,7 +4,13 @@
 #include "ArrayHandler.hpp"
 
 // Global macros
+#define TEST 1
+#if TEST == 1
 #define SIZE_ARRAY 12
+#else
+# define SIZE_ARRAY 200000
+#endif
+
 #define MAX_VALUE 99999
 
 int main(int argc, char *argv[])
@@ -38,12 +44,14 @@ int main(int argc, char *argv[])
       // Retrieve the single array
       array = arrayHandler->getFirstArray();
 
+      #if TEST
       std::cout << "Init array : " << std::endl;
       for(int i = 0; i < SIZE_ARRAY; i++)
         {
           std::cout << "Elements no " << i+1 << "::" << array[i] << std::endl;
         }
       std::cout << "#############################" << std::endl;
+      #endif
     }
   else
     {
@@ -51,47 +59,43 @@ int main(int argc, char *argv[])
     }
 
   // Build counts and displacements to have at the end a whole contiguous array from all process
-  int send_counts[numtasks];
-  int recv_count = size_part;
-  int send_displacements[numtasks];
-  for (int k = 0; k < numtasks; k++)
-    {
-      // Send to each process
-      send_counts[k] = size_part;
-      // Split the init array to numtasks equal parts
-      send_displacements[k] = k*(size_part);
-    }
 
   // Scatter the big array to everybody's part
-  MPI_Scatterv(array, send_counts, send_displacements, MPI_INT,
-               array , recv_count, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatter(array, size_part, MPI_INT,
+               array , size_part, MPI_INT, 0, MPI_COMM_WORLD);
 
   // Sort the array (part of the array for each process)
   sortArray(array, size_part);
 
-  // Build counts and displacements to have at the end a whole contiguous array from all process
-  int receive_counts[numtasks];
-  int receive_displacements[numtasks];
-  for (int k = 0; k < numtasks; k++)
-    {
-      // Each process sends one array of size_part elts
-      receive_counts[k] = size_part;
-      // The array is the n_task part of the whole array
-      receive_displacements[k] = k*size_part;
-    }
-
   // Gather all sorted arrays as contiguous array
-  int send_count = size_part;
-  MPI_Gatherv(array, send_count, MPI_INT, array, receive_counts, receive_displacements,
+  MPI_Gather(array, size_part, MPI_INT, array, size_part,
               MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank == 0)
     {
-      // Re Sort the whole array
-      sortArray(array, SIZE_ARRAY);
+      // Create arrays from continuous array without copies
+      int ** arrays = new int*[numtasks];
+      for (int i = 0; i < numtasks; i++)
+	{
+	  arrays[i]=&array[i*size_part];
+	}
+
+
+      // Gather all parts
+      int * randArray = gatherSortArrays(arrays, numtasks, size_part);
+
+      #if TEST
       // Print the array
       for(int i = 0; i < SIZE_ARRAY; i++)
-        std::cout << "Elements no " << i+1 << "::" << array[i] << std::endl;
+	std::cout << "Elements no " << i+1 << "::" << randArray[i] << std::endl;
+       #endif
+
+      // Free Arrays
+      delete arrays;
+      arrays = 0;
+      delete randArray;
+      randArray = 0;
+
     }
 
   // Free memory
