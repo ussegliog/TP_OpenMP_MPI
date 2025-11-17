@@ -27,43 +27,42 @@ void cal_mat_opt(float *a, float *b, float *c, float *d, float *e,
   long int i;
   int nbIterations_currentThread = 0;
 
-  //#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads, nbThreads), private(nbIterations_currentThread)
-#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads), private(nbIterations_currentThread)
+#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads, nbThreads), private(nbIterations_currentThread)
   {
     nbIterations_currentThread = 0;
     // Private thread memory ("thread" stack)
-    double a_int;
-    double b_int;
-    double c_int;
-    double d_int;
-    double e_int;
+    float a_s;
+    float b_s;
+    float c_s;
+    float d_s;
+    float e_s;
 
 
-#pragma omp for schedule(static), private(a_int, b_int, c_int, d_int, e_int)
+#pragma omp for schedule(static), private(a_s, b_s, c_s, d_s, e_s)
     for (i=0; i<n; i++)
       {
 	// Store values into private thread memory
-	b_int = b[i];
-	c_int = c[i];
-	d_int = d[i];
-	e_int = e[i];
+	b_s = b[i];
+	c_s = c[i];
+	d_s = d[i];
+	e_s = e[i];
 
 	// Calculation (only on thread memory)
-	a_int = b_int + c_int + d_int + e_int;
+	a_s = b_s + c_s + d_s + e_s;
 
 	// Dummy loop (the number of iteration can be decreased)
 	for (int j = 0; j < 100; j++)
 	  {
-	    a_int += b_int*c_int - d_int * e_int;
-	    a_int += b_int +c_int - d_int * e_int;
-	    a_int += b_int - c_int * d_int * e_int;
-	    a_int += b_int + c_int * d_int * e_int;
-	    a_int += 5*b_int - c_int + d_int - 5*e_int;
+	    a_s += b_s*c_s - d_s * e_s;
+	    a_s += b_s +c_s - d_s * e_s;
+	    a_s += b_s - c_s * d_s * e_s;
+	    a_s += b_s + c_s * d_s * e_s;
+	    a_s += 5*b_s - c_s + d_s - 5*e_s;
 	  }
 
 	nbIterations_currentThread++;
 	// Assign value to heap (inside input array)
-	a[i] = a_int;
+	a[i] = a_s;
 
       } // Implicit barrier
 
@@ -92,8 +91,7 @@ void cal_mat(float *a, float *b, float *c, float *d, float *e,
   long int i;
   bool with_iterationDisplay = false;
 
-  //#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads, nbThreads, with_iterationDisplay)
-#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads, with_iterationDisplay)
+#pragma omp parallel default(none), shared(a, b, c, d, e, n, nbIterationsPerthreads, nbThreads, with_iterationDisplay)
   {
 #pragma omp for schedule(static)
     for (i = 0; i < n; i++)
