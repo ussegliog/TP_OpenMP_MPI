@@ -10,7 +10,7 @@
 #SBATCH --mem-per-cpu=4G            # memory per core
 #SBATCH --time=00:10:00             # Wall Time 10mn
 #SBATCH --account=formation_isae       # MANDATORY : account  ( launch myaccounts to list your accounts)
-#SBATCH --qos=cpu_2019_40
+#SBATCH --qos=cpu_2019_80
 #SBATCH --partition=cpu19_rh8
 #SBATCH --export=none               # To start the job with a clean environnement and source of ~/.bashrc
 
@@ -20,5 +20,9 @@ unset SLURM_EXPORT_ENV
 # SLURM_SUBMIT_DIR correspondis to directory where sbatch command has been launched
 cd ${SLURM_SUBMIT_DIR}
 
+module load openmpi
+
+export OMPI_MCA_btl_vader_single_copy_mechanism=none
+
 # Run MPI program (same repository)
-srun ./sort_single_array_exe
+srun --export=ALL ./sort_single_array_exe
