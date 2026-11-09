@@ -18,6 +18,4 @@ cd ${SLURM_SUBMIT_DIR}
 
 module load openmpi
 
-export OMPI_MCA_btl_vader_single_copy_mechanism=none
-
-srun --export=ALL ./test
+srun ./test
