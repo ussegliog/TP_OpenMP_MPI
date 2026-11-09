@@ -22,7 +22,5 @@ cd ${SLURM_SUBMIT_DIR}
 
 module load openmpi
 
-export OMPI_MCA_btl_vader_single_copy_mechanism=none
-
 # Run MPI program (same repository)
-srun --export=ALL ./sort_single_array_exe
+srun ./sort_single_array_exe
