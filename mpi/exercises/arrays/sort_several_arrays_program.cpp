@@ -66,11 +66,13 @@ int main(int argc, char *argv[])
   int number_arrays_per_process = number_of_arrays_in_group/numtasks_group;
 
   int ** arrays;
+  ArrayHandler * arrayHandler;
+  int * randArray;
 
   // Instanciate a arrayHandler if rank = 0 in one of the new groups
   if (rank_group == 0)
     {
-      ArrayHandler * arrayHandler = new ArrayHandler(NUMBER_OF_ARRAYS,
+      arrayHandler = new ArrayHandler(NUMBER_OF_ARRAYS/number_of_group,
                                                  SIZE_ARRAY, MAX_VALUE);
       // Retrieve arrays
       arrays = arrayHandler->getArrays();
@@ -146,7 +148,7 @@ int main(int argc, char *argv[])
         }
 
       // Gather arrays
-      int * randArray = gatherSortArrays(arrays, number_of_arrays_in_group,
+      randArray = gatherSortArrays(arrays, number_of_arrays_in_group,
                                          SIZE_ARRAY);
 
       // At the end, back to comm_world to gather arrays from groups
@@ -201,10 +203,24 @@ int main(int argc, char *argv[])
     }
 
   // // Free memory
-  // delete arrayHandler;
-  // arrayHandler = 0;
-  // delete randArray;
-  // randArray = 0;
+  if (rank_group == 0)
+    {
+      delete arrayHandler;
+      arrayHandler = 0;
+
+      delete randArray;
+      randArray = 0;
+    }
+  else
+    {
+      for (int i = 0; i < number_arrays_per_process; i++)
+	{
+	  delete arrays[0];
+	  arrays[0] = 0;
+	}
+      delete arrays;
+      arrays = 0;
+    }
 
   // Free groups and comms
   MPI_Group_free(&new_group);
