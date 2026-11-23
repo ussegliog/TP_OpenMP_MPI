@@ -131,6 +131,9 @@ int main(int argc, char *argv[])
       sortArray(arrays[id_array], SIZE_ARRAY);
     }
 
+  // Wait here for all processes (to avoid prints mixing)
+  MPI_Barrier(MPI_COMM_WORLD);
+
   // Retrive arrays in each group
   if (rank_group == 0)
     {
